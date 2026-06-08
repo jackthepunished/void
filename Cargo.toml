@@ -1,0 +1,30 @@
+[package]
+name = "void"
+version = "0.1.0"
+edition = "2021"
+description = "A zoomable universe of information in the terminal"
+rust-version = "1.75"
+
+[dependencies]
+tokio = { version = "1", features = ["full"] }
+anyhow = "1"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+ratatui = "0.29"
+crossterm = { version = "0.28", features = ["event-stream"] }
+
+petgraph = "0.7"
+glam = { version = "0.29", features = ["serde", "bytemuck"] }
+
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+uuid = { version = "1", features = ["v4", "serde"] }
+
+futures = "0.3"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
