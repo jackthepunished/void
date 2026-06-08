@@ -12,7 +12,7 @@ use ratatui::Terminal;
 use crate::camera::transform::CameraTransform;
 use crate::core::input::{InputEvent, InputHandler, handle_key_event, handle_mouse_event};
 use crate::core::world::WorldState;
-use crate::render::Renderer;
+use crate::render::{Renderer, RenderContext};
 
 pub struct App {
     world: WorldState,
@@ -71,19 +71,19 @@ impl App {
                     viewport_height: area.height as f32,
                 };
 
-                self.renderer.render(
-                    frame,
-                    area,
-                    &self.world.graph,
-                    &camera,
-                    self.world.selected_node,
-                    self.world.hovered_node,
-                    &self.world.search_query,
-                    self.world.zoom_level,
-                    &search_results,
-                    &anim_progress,
-                    &breadcrumb,
-                );
+                let ctx = RenderContext {
+                    graph: &self.world.graph,
+                    camera: &camera,
+                    selected: self.world.selected_node,
+                    hovered: self.world.hovered_node,
+                    search_query: &self.world.search_query,
+                    zoom_level: self.world.zoom_level,
+                    search_results: &search_results,
+                    anim_progress: &anim_progress,
+                    breadcrumb: &breadcrumb,
+                };
+
+                self.renderer.render(frame, area, &ctx);
             })?;
 
             tokio::select! {

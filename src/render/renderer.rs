@@ -10,6 +10,18 @@ use crate::graph::types::{NodeType, WorldGraph};
 use crate::render::node_renderer::{EdgeRenderer, NodeRenderer};
 use crate::render::themes::Theme;
 
+pub struct RenderContext<'a> {
+    pub graph: &'a WorldGraph,
+    pub camera: &'a CameraTransform,
+    pub selected: Option<uuid::Uuid>,
+    pub hovered: Option<uuid::Uuid>,
+    pub search_query: &'a str,
+    pub zoom_level: f32,
+    pub search_results: &'a [uuid::Uuid],
+    pub anim_progress: &'a std::collections::HashMap<uuid::Uuid, f32>,
+    pub breadcrumb: &'a [String],
+}
+
 pub struct Renderer {
     node_renderer: NodeRenderer,
     edge_renderer: EdgeRenderer,
@@ -25,31 +37,18 @@ impl Renderer {
         }
     }
 
-    pub fn render(
-        &self,
-        frame: &mut Frame,
-        area: Rect,
-        graph: &WorldGraph,
-        camera: &CameraTransform,
-        selected: Option<uuid::Uuid>,
-        hovered: Option<uuid::Uuid>,
-        search_query: &str,
-        zoom_level: f32,
-        search_results: &[uuid::Uuid],
-        anim_progress: &std::collections::HashMap<uuid::Uuid, f32>,
-        breadcrumb: &[String],
-    ) {
+    pub fn render(&self, frame: &mut Frame, area: Rect, ctx: &RenderContext) {
         let block = Block::default()
             .borders(Borders::NONE)
             .style(Style::default().bg(self.theme.background));
         frame.render_widget(Clear, area);
         frame.render_widget(block, area);
 
-        self.render_edges(frame, area, graph, camera);
-        self.render_void_ascii(frame, area, zoom_level);
-        self.render_cluster_boundaries(frame, area, graph, camera, selected);
-        self.render_nodes(frame, area, graph, camera, selected, hovered, search_results, anim_progress);
-        self.render_hud(frame, area, camera, zoom_level, graph.node_count(), search_query, breadcrumb);
+        self.render_edges(frame, area, ctx.graph, ctx.camera);
+        self.render_void_ascii(frame, area, ctx.zoom_level);
+        self.render_cluster_boundaries(frame, area, ctx);
+        self.render_nodes(frame, area, ctx);
+        self.render_hud(frame, area, ctx);
     }
 
     fn render_edges(
@@ -145,10 +144,11 @@ impl Renderer {
         &self,
         frame: &mut Frame,
         area: Rect,
-        graph: &WorldGraph,
-        camera: &CameraTransform,
-        selected: Option<uuid::Uuid>,
+        ctx: &RenderContext,
     ) {
+        let graph = ctx.graph;
+        let camera = ctx.camera;
+        let selected = ctx.selected;
         for idx in graph.graph.node_indices() {
             let node = match graph.get_node(idx) {
                 Some(n) => n,
@@ -200,13 +200,14 @@ impl Renderer {
         &self,
         frame: &mut Frame,
         area: Rect,
-        graph: &WorldGraph,
-        camera: &CameraTransform,
-        selected: Option<uuid::Uuid>,
-        hovered: Option<uuid::Uuid>,
-        search_results: &[uuid::Uuid],
-        anim_progress: &std::collections::HashMap<uuid::Uuid, f32>,
+        ctx: &RenderContext,
     ) {
+        let graph = ctx.graph;
+        let camera = ctx.camera;
+        let selected = ctx.selected;
+        let hovered = ctx.hovered;
+        let search_results = ctx.search_results;
+        let anim_progress = ctx.anim_progress;
         let mut node_positions: Vec<(u16, u16, Line<'static>, u8)> = Vec::new();
 
         for idx in graph.graph.node_indices() {
@@ -255,12 +256,13 @@ impl Renderer {
         &self,
         frame: &mut Frame,
         area: Rect,
-        camera: &CameraTransform,
-        zoom_level: f32,
-        node_count: usize,
-        search_query: &str,
-        breadcrumb: &[String],
+        ctx: &RenderContext,
     ) {
+        let camera = ctx.camera;
+        let zoom_level = ctx.zoom_level;
+        let node_count = ctx.graph.node_count();
+        let search_query = ctx.search_query;
+        let breadcrumb = ctx.breadcrumb;
         if !breadcrumb.is_empty() {
             let breadcrumb_text = breadcrumb.join(" > ");
             let breadcrumb_line = Line::from(vec![

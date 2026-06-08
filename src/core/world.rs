@@ -305,39 +305,32 @@ impl WorldState {
                 None => return,
             };
 
-            let children = self.graph.children_of(idx);
-            if children.is_empty() {
-                return;
-            }
-
-            let current_child_pos = self.selected_node.and_then(|sel_id| {
-                let sel_idx = self.graph.node_by_id(sel_id)?;
-                let parent_idx = self.graph.parent_of(sel_idx)?;
-                if parent_idx == idx {
-                    let siblings = self.graph.children_of(idx);
-                    let pos = siblings.iter().position(|&s| {
-                        self.graph.get_node(s).map(|n| n.id == sel_id).unwrap_or(false)
-                    });
-                    Some(pos.unwrap_or(0))
-                } else {
-                    None
-                }
-            });
-
-            let next_pos = if let Some(pos) = current_child_pos {
-                if forward {
-                    (pos + 1) % children.len()
-                } else {
-                    pos.saturating_add(children.len() - 1) % children.len()
+            let parent_idx = self.graph.parent_of(idx);
+            if let Some(parent_idx) = parent_idx {
+                let siblings = self.graph.children_of(parent_idx);
+                if !siblings.is_empty() {
+                    let pos = siblings.iter().position(|&s| s == idx).unwrap_or(0);
+                    let next_pos = if forward {
+                        (pos + 1) % siblings.len()
+                    } else {
+                        (pos + siblings.len() - 1) % siblings.len()
+                    };
+                    if let Some(&sibling_idx) = siblings.get(next_pos) {
+                        if let Some(child) = self.graph.get_node(sibling_idx) {
+                            self.selected_node = Some(child.id);
+                            self.camera.focus(child.position);
+                        }
+                    }
                 }
             } else {
-                0
-            };
-
-            if let Some(&child_idx) = children.get(next_pos) {
-                if let Some(child) = self.graph.get_node(child_idx) {
-                    self.selected_node = Some(child.id);
-                    self.camera.focus(child.position);
+                // No parent (e.g. root node is selected).
+                // Let's select its first child to go down one level.
+                let children = self.graph.children_of(idx);
+                if let Some(&child_idx) = children.first() {
+                    if let Some(child) = self.graph.get_node(child_idx) {
+                        self.selected_node = Some(child.id);
+                        self.camera.focus(child.position);
+                    }
                 }
             }
         } else {
