@@ -1,6 +1,8 @@
 use glam::Vec2;
 use uuid::Uuid;
 
+use crate::graph::types::NodeType;
+
 #[derive(Debug, Clone)]
 pub struct Node {
     pub id: Uuid,
@@ -25,30 +27,6 @@ impl Node {
 impl Default for Node {
     fn default() -> Self {
         Self::new(NodeType::Root, "")
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
-pub enum NodeType {
-    Root,
-    Project,
-    Task,
-    Note,
-    File,
-    Person,
-    Music,
-    Artist,
-    Album,
-    Song,
-    Bookmark,
-    Knowledge,
-    Event,
-    Cluster,
-}
-
-impl Default for NodeType {
-    fn default() -> Self {
-        Self::Root
     }
 }
 

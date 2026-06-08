@@ -170,6 +170,8 @@ fn handle_search_input(key: KeyEvent, state: &mut crate::core::world::WorldState
 pub fn handle_mouse_event(mouse: MouseEvent, state: &mut crate::core::world::WorldState) {
     match mouse.kind {
         MouseEventKind::Down(MouseButton::Left) => {
+            state.last_mouse_pos = Some((mouse.column, mouse.row));
+
             let screen_pos = glam::Vec2::new(mouse.column as f32, mouse.row as f32);
             let world_pos = state.camera.position + (screen_pos - glam::Vec2::new(60.0, 20.0)) / state.camera.zoom;
 
@@ -196,8 +198,17 @@ pub fn handle_mouse_event(mouse: MouseEvent, state: &mut crate::core::world::Wor
             state.zoom_into_selected();
         }
         MouseEventKind::Drag(MouseButton::Left) => {
-            let delta = glam::Vec2::new(-1.0, -0.5);
-            state.pan(delta);
+            let current = (mouse.column, mouse.row);
+            if let Some(last) = state.last_mouse_pos {
+                let dx = current.0 as f32 - last.0 as f32;
+                let dy = current.1 as f32 - last.1 as f32;
+                let delta = glam::Vec2::new(-dx, -dy) / state.camera.zoom;
+                state.pan(delta);
+            }
+            state.last_mouse_pos = Some(current);
+        }
+        MouseEventKind::Up(MouseButton::Left) => {
+            state.last_mouse_pos = None;
         }
         MouseEventKind::ScrollUp => {
             state.zoom_in();

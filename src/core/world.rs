@@ -19,6 +19,7 @@ pub struct WorldState {
     pub expanded_nodes: std::collections::HashSet<Uuid>,
     pub animating_nodes: std::collections::HashSet<Uuid>,
     pub node_anim_progress: std::collections::HashMap<Uuid, f32>,
+    pub last_mouse_pos: Option<(u16, u16)>,
 }
 
 impl WorldState {
@@ -43,6 +44,7 @@ impl WorldState {
             expanded_nodes: std::collections::HashSet::new(),
             animating_nodes: std::collections::HashSet::new(),
             node_anim_progress: std::collections::HashMap::new(),
+            last_mouse_pos: None,
         };
 
         state.create_demo_world();
